@@ -1,6 +1,43 @@
 #+TITLE: Ziad Ahmed's Emacs Config
 #+Author: Ziad Ahmed
+#+STARTUP: showeverything
 #+PROPERTY: header-args :results silent :tangle yes
+
+* Table of Contents :toc:
+- [[#important-first][Important First]]
+  - [[#straight][Straight]]
+  - [[#no-litterate][no-litterate]]
+- [[#keybindings][Keybindings]]
+  - [[#navigation-keybindings][Navigation Keybindings]]
+  - [[#general-keybindings][General Keybindings]]
+  - [[#leader-keybindings][Leader Keybindings]]
+- [[#fonts][Fonts]]
+- [[#settings][Settings]]
+  - [[#general-settings][General Settings]]
+  - [[#better-deletion][Better Deletion]]
+  - [[#column-indicator--line-numbers][Column Indicator & Line Numbers]]
+  - [[#basic-indentation][Basic Indentation]]
+  - [[#basic-completion][Basic Completion]]
+- [[#visuals][Visuals]]
+  - [[#color-themes][Color Themes]]
+  - [[#diff-hl][diff-hl]]
+  - [[#hl-todo][hl-todo]]
+  - [[#rainbow-delimiters][rainbow-delimiters]]
+- [[#vertico-stack][Vertico Stack]]
+- [[#dired][Dired]]
+  - [[#enabling-direds-extras][Enabling dired's extras]]
+- [[#org-mode][Org Mode]]
+  - [[#org-capture][org-capture]]
+  - [[#babel][Babel]]
+  - [[#toc-org][toc-org]]
+  - [[#org-download][org-download]]
+  - [[#olivetti][Olivetti]]
+- [[#git][Git]]
+  - [[#magit][Magit]]
+- [[#anki][Anki]]
+  - [[#anki-editor][anki-editor]]
+  - [[#upload-to-anki-via-org-capture][Upload to anki via org-capture]]
+- [[#misc-packages][Misc Packages]]
 
 * Important First
 
@@ -89,24 +126,21 @@
 
 ** General Keybindings
 #+begin_src emacs-lisp
-(bind-keys
- ("C-,"           . duplicate-line)
- ("C-<tab>"       . mode-line-other-buffer)
- ("C-n"           . (lambda () (interactive) (forward-line  5)))
- ("C-p"           . (lambda () (interactive) (forward-line -5)))
- ("M-n"           . recenter-top-bottom)
- ("C-x C-="       . (lambda () (interactive) (enlarge-window-horizontally 10)))
- ("C-x C--"       . (lambda () (interactive) (shrink-window-horizontally 10)))
+  (bind-keys
+   ("C-,"           . duplicate-line)
+   ("C-<tab>"       . mode-line-other-buffer)
+   ("C-n"           . (lambda () (interactive) (forward-line  5)))
+   ("C-p"           . (lambda () (interactive) (forward-line -5)))
+   ("M-n"           . recenter-top-bottom)
+   ("C-x C-="       . (lambda () (interactive) (enlarge-window-horizontally 10)))
+   ("C-x C--"       . (lambda () (interactive) (shrink-window-horizontally 10)))
 
- ;; C-c prefix
- :map global-map
- ("C-c f" . find-file-at-point)
- ("C-c h" . previous-buffer)
- ("C-c l" . next-buffer)
- ("C-c o c" . my/open-config)
-
- :map org-mode-map
- ("C-c s" . org-download-clipboard))
+   ;; C-c prefix
+   :map global-map
+   ("C-c f" . find-file-at-point)
+   ("C-c h" . previous-buffer)
+   ("C-c l" . next-buffer)
+   ("C-c o c" . my/open-config))
 #+end_src
 
 ** Leader Keybindings
@@ -114,7 +148,8 @@
 (bind-keys :prefix-map my-leader-map
            :prefix "C-z"
            ("h"   . help-command)
-           ("t" . org-babel-tangle))
+           ("c"   . org-capture)
+           ("t"   . org-babel-tangle))
 #+end_src
 
 * Fonts
@@ -150,7 +185,6 @@
 (setq-default line-spacing 0.12)
 (add-hook 'org-mode-hook 'variable-pitch-mode)
 #+end_src
-
 
 * Settings
 
@@ -301,6 +335,18 @@
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
 #+end_src
 
+** Basic Completion
+#+begin_src emacs-lisp
+;; Company mode
+(use-package company
+  :ensure t
+  :hook (after-init . global-company-mode)
+  :bind (:map company-active-map
+              ("C-j" . company-select-next)
+              ("C-k" . company-select-previous)
+              ("TAB" . company-complete-selection)))
+#+end_src
+
 * Visuals
 
 ** Color Themes
@@ -411,9 +457,12 @@
 ** Enabling dired's extras
 #+begin_src emacs-lisp
 (require 'dired-x)
-(setq dired-dwim-target t)
+(setq dired-omit-files
+      (concat dired-omit-files "\\|^\\..+$"))
+(setq-default dired-dwim-target t)
+(setq dired-listing-switches "-alh")
+(setq dired-mouse-drag-files t)
 #+end_src
-
 
 * Org Mode
 
@@ -461,7 +510,9 @@
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
-   (C . t)))
+   (C . t)
+   (shell . t)
+   (java . t)))
 
 (setq        org-src-tab-acts-natively t)
 (setq        org-src-fontify-natively t)
@@ -492,6 +543,8 @@
 #+begin_src emacs-lisp
 (use-package org-download
   :defer t
+  :bind (:map org-mode-map
+              ("C-c s" . org-download-clipboard))
   :config
   (setq-default org-download-heading-lvl nil)
   (setq-default org-download-image-dir "./images"))
@@ -513,7 +566,6 @@
                  (setq org-modern-block-fringe t)))))
 #+end_src
 
-
 * Git
 
 ** Magit
@@ -524,7 +576,6 @@
   :commands (magit-status)
   :bind (("C-x g" . magit-status)))
 #+end_src
-
 
 * Anki
 
@@ -549,7 +600,6 @@
 
 (add-hook 'org-capture-after-finalize-hook #'my/anki-push-after-capture)
 #+end_src
-
 
 * Misc Packages
 

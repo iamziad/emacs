@@ -1,29 +1,29 @@
 (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name
-          "straight/repos/straight.el/bootstrap.el"
-          (or (bound-and-true-p straight-base-dir)
-              user-emacs-directory)))
-        (bootstrap-version 7))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+(let ((bootstrap-file
+       (expand-file-name
+        "straight/repos/straight.el/bootstrap.el"
+        (or (bound-and-true-p straight-base-dir)
+            user-emacs-directory)))
+      (bootstrap-version 7))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
 
-  (straight-use-package 'use-package)
-  (setq straight-vc-git-default-protocol 'https)
-  (setq straight-use-package-by-default t)
+(straight-use-package 'use-package)
+(setq straight-vc-git-default-protocol 'https)
+(setq straight-use-package-by-default t)
 
-  (use-package no-littering
-    :straight t
-    :config
-    (require 'no-littering)
-    (setq auto-save-file-name-transforms
-          `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
+(use-package no-littering
+  :straight t
+  :config
+  (require 'no-littering)
+  (setq auto-save-file-name-transforms
+        `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))))
 
 (defvar my-nav-map (make-sparse-keymap))
 (define-key my-nav-map (kbd "C-h") #'backward-char)
@@ -86,13 +86,11 @@
    ("C-c l" . next-buffer)
    ("C-c o c" . my/open-config))
 
-   ;; :map org-mode-map
-   ;; ("C-c s" . org-download-clipboard))
-
 (bind-keys :prefix-map my-leader-map
            :prefix "C-z"
            ("h"   . help-command)
-           ("t" . org-babel-tangle))
+           ("c"   . org-capture)
+           ("t"   . org-babel-tangle))
 
 (defun my/setup-fonts ()
   (set-face-attribute 'default nil
@@ -182,18 +180,18 @@
 (require 'subword)
 
 (defun my/delete-selected ()
-    "Delete selected region without adding to kill ring."
-    (interactive)
-    (if (use-region-p)
-            (delete-region (region-beginning) (region-end))
-        (delete-char -1)))
+  "Delete selected region without adding to kill ring."
+  (interactive)
+  (if (use-region-p)
+      (delete-region (region-beginning) (region-end))
+    (delete-char -1)))
 
 (defun my/delete-smart-to-end ()
-    "Delete to end of line, or delete newline if already at end of line."
-    (interactive)
-    (if (= (point) (line-end-position))
-            (unless (eobp)        (delete-char 1))
-        (delete-region (point) (line-end-position))))
+  "Delete to end of line, or delete newline if already at end of line."
+  (interactive)
+  (if (= (point) (line-end-position))
+      (unless (eobp)        (delete-char 1))
+    (delete-region (point) (line-end-position))))
 
 (defun my/backward-delete-word ()
   "Delete word but stay within the current line, respecting camelCase boundaries."
@@ -208,10 +206,10 @@
       (delete-char -1))))
 
 (defun my/forward-delete-word ()
-    "Delete word forward without adding to kill-ring."
-    (interactive)
-    (delete-region (point)
-                   (progn (forward-word 1) (point))))
+  "Delete word forward without adding to kill-ring."
+  (interactive)
+  (delete-region (point)
+                 (progn (forward-word 1) (point))))
 
 (bind-keys
  ("M-k"           . my/delete-smart-to-end)
@@ -234,16 +232,9 @@
                 Man-mode-hook
   	            olivetti-mode-hook
                 vterm-mode-hook))
-    (add-hook hook (lambda ()
-                       (display-line-numbers-mode 0)
-                       (display-fill-column-indicator-mode 0))))
-
-(use-package buffer-move
-    :bind (:map my-leader-map
-  	            ("w k" . buf-move-up)
-  	            ("w j" . buf-move-down)
-  	            ("w h" . buf-move-left)
-  	            ("w l" . buf-move-right)))
+  (add-hook hook (lambda ()
+                   (display-line-numbers-mode 0)
+                   (display-fill-column-indicator-mode 0))))
 
 (setq-default indent-tabs-mode nil
               tab-width 4
@@ -266,45 +257,54 @@
   (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
 
-(use-package gruvbox-material-emacs
-    :straight (gruvbox-material-emacs
-               :local-repo "~/gruvbox-material-emacs"
-               :branch "perf"
-               :type git
-               :files ("*.el"))
-    :init
-    (setq gm-background               'dark
-          gm-dark-variant             'classic
-          gm-dark-modeline            'material
-          gm-org                      'material
-          gm-diff-hl-style            'signs
-          gm-org-scale-headings       'conservative
-          gm-syntax-keywords          'semi-bold
-          gm-light-contrast  'hard)
-    :config
-    (gruvbox-material-load))
+;; Company mode
+(use-package company
+  :ensure t
+  :hook (after-init . global-company-mode)
+  :bind (:map company-active-map
+              ("C-j" . company-select-next)
+              ("C-k" . company-select-previous)
+              ("TAB" . company-complete-selection)))
 
-  (use-package ef-themes
-    :ensure t
-    :init
-    (ef-themes-take-over-modus-themes-mode 1)
-    :bind
-    (("<f6>" . modus-themes-rotate)
-     ("C-<f6>" . modus-themes-select)
-     ("M-<f6>" . modus-themes-load-random))
-    :config
-    (setq modus-themes-mixed-fonts t)
-    (setq modus-themes-italic-constructs t))
+(use-package gruvbox-material-emacs
+  :straight (gruvbox-material-emacs
+             :local-repo "~/gruvbox-material-emacs"
+             :branch "perf"
+             :type git
+             :files ("*.el"))
+  :init
+  (setq gm-background               'dark
+        gm-dark-variant             'classic
+        gm-dark-modeline            'material
+        gm-org                      'material
+        gm-diff-hl-style            'signs
+        gm-org-scale-headings       'conservative
+        gm-syntax-keywords          'semi-bold
+        gm-light-contrast  'hard)
+  :config
+  (gruvbox-material-load))
+
+(use-package ef-themes
+  :ensure t
+  :init
+  (ef-themes-take-over-modus-themes-mode 1)
+  :bind
+  (("<f6>" . modus-themes-rotate)
+   ("C-<f6>" . modus-themes-select)
+   ("M-<f6>" . modus-themes-load-random))
+  :config
+  (setq modus-themes-mixed-fonts t)
+  (setq modus-themes-italic-constructs t))
 
 (use-package diff-hl
-    :config
-    (global-diff-hl-mode 1)
-    (setq diff-hl-fringe-bmp-function #'diff-hl-fringe-bmp-from-type)
-    (diff-hl-show-hunk-mouse-mode)
-    (diff-hl-flydiff-mode 1)
-    (add-hook 'magit-pre-refresh-hook  'diff-hl-magit-pre-refresh)
-    (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-    (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
+  :config
+  (global-diff-hl-mode 1)
+  (setq diff-hl-fringe-bmp-function #'diff-hl-fringe-bmp-from-type)
+  (diff-hl-show-hunk-mouse-mode)
+  (diff-hl-flydiff-mode 1)
+  (add-hook 'magit-pre-refresh-hook  'diff-hl-magit-pre-refresh)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+  (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
 
 (use-package hl-todo
   :hook ((org-mode . hl-todo-mode)
@@ -330,26 +330,30 @@
   :hook ((emacs-lisp-mode lisp-mode common-lisp-mode) . rainbow-delimiters-mode))
 
 (use-package vertico
-    :init (vertico-mode)
-    :bind (:map vertico-map
-                ("C-j" . vertico-next)
-                ("C-k" . vertico-previous))
-    :custom
-    (vertico-resize t)
-    (vertico-cycle  t)
-    (vertico-scroll-margin 0))
+  :init (vertico-mode)
+  :bind (:map vertico-map
+              ("C-j" . vertico-next)
+              ("C-k" . vertico-previous))
+  :custom
+  (vertico-resize t)
+  (vertico-cycle  t)
+  (vertico-scroll-margin 0))
 
 (use-package marginalia
-    :init (marginalia-mode))
+  :init (marginalia-mode))
 
 (use-package orderless
-    :custom
-    (completion-styles              '(orderless basic))
-    (completion-category-defaults  nil)
-    (completion-category-overrides '((file (styles partial-completion)))))
+  :custom
+  (completion-styles              '(orderless basic))
+  (completion-category-defaults  nil)
+  (completion-category-overrides '((file (styles partial-completion)))))
 
 (require 'dired-x)
-(setq dired-dwim-target t)
+(setq dired-omit-files
+      (concat dired-omit-files "\\|^\\..+$"))
+(setq-default dired-dwim-target t)
+(setq dired-listing-switches "-alh")
+(setq dired-mouse-drag-files t)
 
 (require 'org-tempo)
 
@@ -388,7 +392,9 @@
 (org-babel-do-load-languages
  'org-babel-load-languages
  '((emacs-lisp . t)
-   (C . t)))
+   (C . t)
+   (shell . t)
+   (java . t)))
 
 (setq        org-src-tab-acts-natively t)
 (setq        org-src-fontify-natively t)
@@ -397,38 +403,40 @@
 (setq        org-src-window-setup 'current-window)
 
 (use-package toc-org
-    :straight (:host github
-   		             :repo "iamziad/toc-org"
-   		             :branch "toc-side-window"
-   		             :files ("*.el"))
-    :commands toc-org-enable
-    :bind (:map my-leader-map
-  	            ("o" . toc-org-navigation-pane))
-    :config
-    (setq toc-org-side-window-side 'left)
-    (setq toc-org-side-window-size '40)
-    :init
-    (add-hook 'markdown-mode-hook #'toc-org-enable)
-    (add-hook 'org-mode-hook #'toc-org-enable))
+  :straight (:host github
+   		           :repo "iamziad/toc-org"
+   		           :branch "toc-side-window"
+   		           :files ("*.el"))
+  :commands toc-org-enable
+  :bind (:map my-leader-map
+  	          ("o" . toc-org-navigation-pane))
+  :config
+  (setq toc-org-side-window-side 'left)
+  (setq toc-org-side-window-size '40)
+  :init
+  (add-hook 'markdown-mode-hook #'toc-org-enable)
+  (add-hook 'org-mode-hook #'toc-org-enable))
 
 (use-package org-download
-    :defer t
-    :config
-    (setq-default org-download-heading-lvl nil)
-    (setq-default org-download-image-dir "./images"))
+  :defer t
+  :bind (:map org-mode-map
+              ("C-c s" . org-download-clipboard))
+  :config
+  (setq-default org-download-heading-lvl nil)
+  (setq-default org-download-image-dir "./images"))
 
 (use-package olivetti
-    :defer t
-    :init
-    (setq olivetti-body-width 90)
-    (setq olivetti-recall-visual-line-mode-entry-state t)
-    :hook
-    ((olivetti-mode . (lambda ()
-                          (visual-line-mode 1)
-                          (setq-local word-wrap t)
-                          (setq-local bidi-paragraph-direction nil)))
-     (org-mode . (lambda ()
-                     (setq org-modern-block-fringe t)))))
+  :defer t
+  :init
+  (setq olivetti-body-width 90)
+  (setq olivetti-recall-visual-line-mode-entry-state t)
+  :hook
+  ((olivetti-mode . (lambda ()
+                      (visual-line-mode 1)
+                      (setq-local word-wrap t)
+                      (setq-local bidi-paragraph-direction nil)))
+   (org-mode . (lambda ()
+                 (setq org-modern-block-fringe t)))))
 
 (use-package magit
   :after (transient)
@@ -453,15 +461,27 @@
 (add-hook 'org-capture-after-finalize-hook #'my/anki-push-after-capture)
 
 (use-package anzu
-    :config
-    (global-anzu-mode 1))
+  :config
+  (global-anzu-mode 1))
 
 (use-package expand-region
-    :bind ("C-=" . er/expand-region)
-          ("C--" . er/contract-region))
+  :bind ("C-=" . er/expand-region)
+  ("C--" . er/contract-region))
 
 (use-package ace-window
-    :ensure t
-    :bind ("M-o" . ace-window)
-    :config
-    (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+  :ensure t
+  :bind ("M-o" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
+
+(use-package buffer-move
+  :bind (:map my-leader-map
+  	          ("w k" . buf-move-up)
+  	          ("w j" . buf-move-down)
+  	          ("w h" . buf-move-left)
+  	          ("w l" . buf-move-right)))
