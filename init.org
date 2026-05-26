@@ -200,7 +200,8 @@
         scroll-preserve-screen-position t
         scroll-margin 5
         whitespace-style '(face tabs tab-mark trailing)
-        use-package-compute-statistics t)
+        use-package-compute-statistics t
+        default-input-method "arabic")
 
   (global-whitespace-mode 1)
   (tool-bar-mode   0)
@@ -564,6 +565,18 @@
                       (setq-local bidi-paragraph-direction nil)))
    (org-mode . (lambda ()
                  (setq org-modern-block-fringe t)))))
+
+;; Enabling olivetti when switching to arabic
+(defun my/toggle-olivetti-by-input-method ()
+  (if current-input-method
+      (olivetti-mode 1)
+    (olivetti-mode -1)))
+
+(add-hook 'input-method-activate-hook
+          #'my/toggle-olivetti-by-input-method)
+
+(add-hook 'input-method-inactivate-hook
+          #'my/toggle-olivetti-by-input-method)
 #+end_src
 
 * Git
