@@ -4,42 +4,45 @@
 #+PROPERTY: header-args :results silent :tangle yes
 
 * Table of Contents :toc:
-- [[#important-first][Important First]]
+- [[#bootstrap][Bootstrap]]
   - [[#straight][Straight]]
   - [[#no-litterate][no-litterate]]
 - [[#keybindings][Keybindings]]
-  - [[#navigation-keybindings][Navigation Keybindings]]
-  - [[#general-keybindings][General Keybindings]]
-  - [[#leader-keybindings][Leader Keybindings]]
-- [[#fonts][Fonts]]
-- [[#settings][Settings]]
+  - [[#cursor-navigation][Cursor Navigation]]
+  - [[#general][General]]
+  - [[#leader-key][Leader Key]]
+- [[#core][Core]]
   - [[#general-settings][General Settings]]
+  - [[#fonts][Fonts]]
+  - [[#buffers--windows][Buffers & Windows]]
   - [[#better-deletion][Better Deletion]]
-  - [[#column-indicator--line-numbers][Column Indicator & Line Numbers]]
-  - [[#basic-indentation][Basic Indentation]]
-  - [[#basic-completion][Basic Completion]]
+  - [[#editing][Editing]]
+  - [[#dired][Dired]]
 - [[#visuals][Visuals]]
+  - [[#column-indicator--line-numbers][Column Indicator & Line Numbers]]
   - [[#color-themes][Color Themes]]
-  - [[#diff-hl][diff-hl]]
   - [[#hl-todo][hl-todo]]
   - [[#rainbow-delimiters][rainbow-delimiters]]
-- [[#vertico-stack][Vertico Stack]]
-- [[#dired][Dired]]
-  - [[#enabling-direds-extras][Enabling dired's extras]]
+- [[#completion][Completion]]
+  - [[#vertico-stack][Vertico Stack]]
+  - [[#company][Company]]
+  - [[#yasnippet][YAsnippet]]
+- [[#programming][Programming]]
+  - [[#basic-indentation][Basic Indentation]]
+  - [[#editor-config][Editor Config]]
 - [[#org-mode][Org Mode]]
-  - [[#org-capture][org-capture]]
   - [[#babel][Babel]]
+  - [[#olivetti][Olivetti]]
+  - [[#anki][Anki]]
+  - [[#org-capture][org-capture]]
   - [[#toc-org][toc-org]]
   - [[#org-download][org-download]]
-  - [[#olivetti][Olivetti]]
 - [[#git][Git]]
   - [[#magit][Magit]]
-- [[#anki][Anki]]
-  - [[#anki-editor][anki-editor]]
-  - [[#upload-to-anki-via-org-capture][Upload to anki via org-capture]]
+  - [[#diff-hl][diff-hl]]
 - [[#misc-packages][Misc Packages]]
 
-* Important First
+* Bootstrap
 
 ** Straight
 #+begin_src emacs-lisp
@@ -76,7 +79,7 @@
 
 * Keybindings
 
-** Navigation Keybindings
+** Cursor Navigation
 #+begin_src emacs-lisp
 (defvar my-nav-map (make-sparse-keymap))
 (define-key my-nav-map (kbd "C-h") #'backward-char)
@@ -124,7 +127,7 @@
   (define-key magit-diff-mode-map (kbd "C-j") nil))
 #+end_src
 
-** General Keybindings
+** General
 #+begin_src emacs-lisp
 (bind-keys
  ("C-,"           . duplicate-line)
@@ -146,7 +149,7 @@
  ("C-c o c" . my/open-config))
 #+end_src
 
-** Leader Keybindings
+** Leader Key
 #+begin_src emacs-lisp
 (bind-keys :prefix-map my-leader-map
            :prefix "C-z"
@@ -155,37 +158,7 @@
            ("t"   . org-babel-tangle))
 #+end_src
 
-* Fonts
-
-#+begin_src emacs-lisp
-(defun my/setup-fonts ()
-  (interactive)
-  (when (display-graphic-p)
-    (set-face-attribute 'default nil
-                        :family "JetBrains Mono Nerd Font"
-                        :height 110
-                        :weight 'regular)
-
-    (set-face-attribute 'fixed-pitch nil
-                        :family "JetBrains Mono Nerd Font"
-                        :height 1.0)
-
-    (set-fontset-font t 'arabic
-                      (font-spec :family "Cairo"
-                                 :size 15))))
-
-(setq-default line-spacing 0.12)
-
-(my/setup-fonts)
-
-
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (with-selected-frame frame
-              (my/setup-fonts))))
-#+end_src
-
-* Settings
+* Core
 
 ** General Settings
 #+begin_src emacs-lisp
@@ -245,6 +218,52 @@
    '(read-only t cursor-intangible t face minibuffer-prompt)))
 #+end_src
 
+** Fonts
+#+begin_src emacs-lisp
+(defun my/setup-fonts ()
+  (interactive)
+  (when (display-graphic-p)
+    (set-face-attribute 'default nil
+                        :family "JetBrains Mono Nerd Font"
+                        :height 110
+                        :weight 'regular)
+
+    (set-face-attribute 'fixed-pitch nil
+                        :family "JetBrains Mono Nerd Font"
+                        :height 1.0)
+
+    (set-fontset-font t 'arabic
+                      (font-spec :family "Cairo"
+                                 :size 15))))
+
+(setq-default line-spacing 0.12)
+
+(my/setup-fonts)
+
+
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (with-selected-frame frame
+              (my/setup-fonts))))
+#+end_src
+
+** Buffers & Windows
+#+begin_src emacs-lisp
+(use-package ace-window
+  :ensure t
+  :bind ("M-o" . ace-window)
+  :config
+  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
+
+
+(use-package buffer-move
+  :bind (:map my-leader-map
+              ("w k" . buf-move-up)
+              ("w j" . buf-move-down)
+              ("w h" . buf-move-left)
+              ("w l" . buf-move-right)))
+#+end_src
+
 ** Better Deletion
 #+begin_src emacs-lisp
 (require 'subword)
@@ -289,6 +308,38 @@
  ("<C-backspace>" . my/backward-delete-word))
 #+end_src
 
+** Editing
+#+begin_src emacs-lisp
+(use-package multiple-cursors
+  :ensure t
+  :bind (("C->"         . mc/mark-next-like-this)
+         ("C-<"         . mc/mark-previous-like-this)
+         ("C-M-<"         . mc/skip-to-previous-like-this)
+         ("C-M->"         . mc/skip-to-next-like-this)
+         ("C-c C-c C-d" . mc/mark-all-dwim)
+         ("C-c C-c C-a" . mc/mark-all-like-this)
+         ("C-c C-c C-n" . electric-newline-and-maybe-indent)
+         ("C-c C-c C-e"       . mc/edit-lines))
+  :config
+  (setq mc/always-run-for-all t))
+
+(use-package expand-region
+  :bind ("C-=" . er/expand-region)
+  ("C--" . er/contract-region))
+#+end_src
+
+** Dired
+#+begin_src emacs-lisp
+(require 'dired-x)
+(setq dired-omit-files
+      (concat dired-omit-files "\\|^\\..+$"))
+(setq-default dired-dwim-target t)
+(setq dired-listing-switches "-alh")
+(setq dired-mouse-drag-files t)
+#+end_src
+
+* Visuals
+
 ** Column Indicator & Line Numbers
 #+begin_src emacs-lisp
 ;; Column Indicator
@@ -303,50 +354,12 @@
                 shell-mode-hook
                 eshell-mode-hook
                 Man-mode-hook
-  	            olivetti-mode-hook
+                olivetti-mode-hook
                 vterm-mode-hook))
   (add-hook hook (lambda ()
                    (display-line-numbers-mode 0)
                    (display-fill-column-indicator-mode 0))))
 #+end_src
-
-** Basic Indentation
-#+begin_src emacs-lisp
-(setq-default indent-tabs-mode nil
-              tab-width 4
-              standard-indent 4
-              c-basic-offset 4
-              js-indent-level 2
-              css-indent-offset 2)
-
-(use-package make-mode
-  :ensure nil
-  :hook (makefile-mode . (lambda ()
-                           (setq indent-tabs-mode t)
-                           (setq tab-width 4))))
-
-(use-package aggressive-indent
-  :ensure t
-  :config
-  (global-aggressive-indent-mode 1)
-  (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
-  (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
-  (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
-#+end_src
-
-** Basic Completion
-#+begin_src emacs-lisp
-;; Company mode
-(use-package company
-  :ensure t
-  :hook (after-init . global-company-mode)
-  :bind (:map company-active-map
-              ("C-j" . company-select-next)
-              ("C-k" . company-select-previous)
-              ("TAB" . company-complete-selection)))
-#+end_src
-
-* Visuals
 
 ** Color Themes
 
@@ -387,19 +400,6 @@
   ;;(modus-themes-load-theme 'ef-dream))
 #+end_src
 
-** diff-hl
-#+begin_src emacs-lisp
-(use-package diff-hl
-  :config
-  (global-diff-hl-mode 1)
-  (setq diff-hl-fringe-bmp-function #'diff-hl-fringe-bmp-from-type)
-  (diff-hl-show-hunk-mouse-mode)
-  (diff-hl-flydiff-mode 1)
-  (add-hook 'magit-pre-refresh-hook  'diff-hl-magit-pre-refresh)
-  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
-  (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
-#+end_src
-
 ** hl-todo
 #+begin_src emacs-lisp
 (use-package hl-todo
@@ -429,8 +429,9 @@
   :hook ((emacs-lisp-mode lisp-mode common-lisp-mode) . rainbow-delimiters-mode))
 #+end_src
 
-* Vertico Stack
+* Completion
 
+** Vertico Stack
 #+begin_src emacs-lisp
 (use-package vertico
   :init (vertico-mode)
@@ -452,22 +453,132 @@
   (completion-category-overrides '((file (styles partial-completion)))))
 #+end_src
 
-* Dired
-
-** Enabling dired's extras
+** Company
 #+begin_src emacs-lisp
-(require 'dired-x)
-(setq dired-omit-files
-      (concat dired-omit-files "\\|^\\..+$"))
-(setq-default dired-dwim-target t)
-(setq dired-listing-switches "-alh")
-(setq dired-mouse-drag-files t)
+;; Company mode
+(use-package company
+  :ensure t
+  :hook (after-init . global-company-mode)
+  :bind (:map company-active-map
+              ("C-j" . company-select-next)
+              ("C-k" . company-select-previous)
+              ("TAB" . company-complete-selection)))
+#+end_src
+
+** YAsnippet
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :config
+  (setq yas-snippet-dirs '("~/.config/emacs/snippets"))
+  (yas-global-mode 1))
+#+end_src
+
+* Programming
+
+** Basic Indentation
+#+begin_src emacs-lisp
+(setq-default indent-tabs-mode nil
+              tab-width 4
+              standard-indent 4
+              c-basic-offset 4
+              js-indent-level 2
+              css-indent-offset 2)
+
+(use-package make-mode
+  :ensure nil
+  :hook (makefile-mode . (lambda ()
+                           (setq indent-tabs-mode t)
+                           (setq tab-width 4))))
+
+(use-package aggressive-indent
+  :ensure t
+  :config
+  (global-aggressive-indent-mode 1)
+  (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
+  (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
+  (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
+#+end_src
+
+** Editor Config
+#+begin_src emacs-lisp
+(use-package editorconfig
+  :ensure t
+  :config
+  (editorconfig-mode 1))
 #+end_src
 
 * Org Mode
 
 #+begin_src emacs-lisp
 (require 'org-tempo)
+#+end_src
+
+** Babel
+#+begin_src emacs-lisp
+(org-babel-do-load-languages
+ 'org-babel-load-languages
+ '((emacs-lisp . t)
+   (C . t)
+   (shell . t)
+   (java . t)))
+
+(setq        org-src-tab-acts-natively t)
+(setq        org-src-fontify-natively t)
+(setq        org-confirm-babel-evaluate nil)
+(setq        org-src-preserve-indentation t)
+(setq        org-src-window-setup 'current-window)
+#+end_src
+
+** Olivetti
+#+begin_src emacs-lisp
+(use-package olivetti
+  :defer t
+  :init
+  (setq olivetti-body-width 90)
+  (setq olivetti-recall-visual-line-mode-entry-state t)
+  :hook
+  ((olivetti-mode . (lambda ()
+                      (visual-line-mode 1)
+                      (setq-local word-wrap t)
+                      (setq-local bidi-paragraph-direction nil)))
+   (org-mode . (lambda ()
+                 (setq org-modern-block-fringe t)))))
+
+;; Enabling olivetti when switching to arabic
+(defun my/toggle-olivetti-by-input-method ()
+  (unless (derived-mode-p 'prog-mode 'dired-mode 'vterm-mode)
+    (if current-input-method
+        (olivetti-mode 1)
+      (olivetti-mode -1))))
+
+(add-hook 'input-method-activate-hook
+          #'my/toggle-olivetti-by-input-method)
+
+(add-hook 'input-method-inactivate-hook
+          #'my/toggle-olivetti-by-input-method)
+
+;; Enabling olivetti in eww
+(add-hook 'eww-mode-hook #'olivetti-mode)
+#+end_src
+
+** Anki
+#+begin_src emacs-lisp
+(use-package anki-editor
+  :ensure t)
+
+;; Upload to anki via org-capture
+(defun my/anki-push-after-capture ()
+  (let ((file (expand-file-name "/tmp/anki.org")))
+    (when (file-exists-p file)
+      (with-current-buffer (find-file-noselect file)
+        (condition-case err
+            (progn
+              (anki-editor-push-notes)
+              (message "Anki: flashcard pushed successfully!"))
+          (error
+           (message "Anki: failed to push — %s" (error-message-string err))))))))
+
+(add-hook 'org-capture-after-finalize-hook #'my/anki-push-after-capture)
 #+end_src
 
 ** org-capture
@@ -505,32 +616,16 @@
          "* TODO %^{Title}\n [[%x][Link]]\n :PROPERTIES:\n :TYPE: %^{Type|Video|Article|Tutorial|Lecture/Conference}\n :END:\n\n %?\n %U\n")))
 #+end_src
 
-** Babel
-#+begin_src emacs-lisp
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((emacs-lisp . t)
-   (C . t)
-   (shell . t)
-   (java . t)))
-
-(setq        org-src-tab-acts-natively t)
-(setq        org-src-fontify-natively t)
-(setq        org-confirm-babel-evaluate nil)
-(setq        org-src-preserve-indentation t)
-(setq        org-src-window-setup 'current-window)
-#+end_src
-
 ** toc-org
 #+BEGIN_SRC emacs-lisp
 (use-package toc-org
   :straight (:host github
-   		           :repo "iamziad/toc-org"
-   		           :branch "toc-side-window"
-   		           :files ("*.el"))
+                   :repo "iamziad/toc-org"
+                   :branch "toc-side-window"
+                   :files ("*.el"))
   :commands toc-org-enable
   :bind (:map my-leader-map
-  	          ("o" . toc-org-navigation-pane))
+              ("o" . toc-org-navigation-pane))
   :config
   (setq toc-org-side-window-side 'left)
   (setq toc-org-side-window-size '40)
@@ -550,76 +645,28 @@
   (setq-default org-download-image-dir "./images"))
 #+end_src
 
-** Olivetti
-#+begin_src emacs-lisp
-(use-package olivetti
-  :defer t
-  :init
-  (setq olivetti-body-width 90)
-  (setq olivetti-recall-visual-line-mode-entry-state t)
-  :hook
-  ((olivetti-mode . (lambda ()
-                      (visual-line-mode 1)
-                      (setq-local word-wrap t)
-                      (setq-local bidi-paragraph-direction nil)))
-   (org-mode . (lambda ()
-                 (setq org-modern-block-fringe t)))))
-
-;; Enabling olivetti when switching to arabic
-(defun my/toggle-olivetti-by-input-method ()
-  (unless (derived-mode-p 'prog-mode 'dired-mode 'vterm-mode)
-    (if current-input-method
-        (olivetti-mode 1)
-      (olivetti-mode -1))))
-
-(add-hook 'input-method-activate-hook
-          #'my/toggle-olivetti-by-input-method)
-
-(add-hook 'input-method-inactivate-hook
-          #'my/toggle-olivetti-by-input-method)
-
-;; Enabling olivetti in eww
-(add-hook 'eww-mode-hook #'olivetti-mode)
-#+end_src
-
 * Git
 
 ** Magit
 #+begin_src emacs-lisp
 (use-package magit
-  :after (transient)
-  :init
+  :after transient
   :commands (magit-status)
-  :bind (("C-x g" . magit-status))
+  :bind (("C-x g" . magit-status)
+         ("C-x v" . magit-diff-visit-file-other-window)))
+#+end_src
+
+** diff-hl
+#+begin_src emacs-lisp
+(use-package diff-hl
   :config
-  (setq display-buffer-alist
-        '((".*"
-           (display-buffer-reuse-window
-            display-buffer-pop-up-window)))))
-#+end_src
-
-* Anki
-
-** anki-editor
-#+begin_src emacs-lisp
-(use-package anki-editor
-  :ensure t)
-#+end_src
-
-** Upload to anki via org-capture
-#+begin_src emacs-lisp
-(defun my/anki-push-after-capture ()
-  (let ((file (expand-file-name "/tmp/anki.org")))
-    (when (file-exists-p file)
-      (with-current-buffer (find-file-noselect file)
-        (condition-case err
-            (progn
-              (anki-editor-push-notes)
-              (message "Anki: flashcard pushed successfully!"))
-          (error
-           (message "Anki: failed to push — %s" (error-message-string err))))))))
-
-(add-hook 'org-capture-after-finalize-hook #'my/anki-push-after-capture)
+  (global-diff-hl-mode 1)
+  (setq diff-hl-fringe-bmp-function #'diff-hl-fringe-bmp-from-type)
+  (diff-hl-show-hunk-mouse-mode)
+  (diff-hl-flydiff-mode 1)
+  (add-hook 'magit-pre-refresh-hook  'diff-hl-magit-pre-refresh)
+  (add-hook 'magit-post-refresh-hook 'diff-hl-magit-post-refresh)
+  (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
 #+end_src
 
 * Misc Packages
@@ -628,31 +675,4 @@
 (use-package anzu
   :config
   (global-anzu-mode 1))
-
-(use-package expand-region
-  :bind ("C-=" . er/expand-region)
-  ("C--" . er/contract-region))
-
-(use-package ace-window
-  :ensure t
-  :bind ("M-o" . ace-window)
-  :config
-  (setq aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l)))
-
-(use-package editorconfig
-  :ensure t
-  :config
-  (editorconfig-mode 1))
-
-(use-package buffer-move
-  :bind (:map my-leader-map
-  	          ("w k" . buf-move-up)
-  	          ("w j" . buf-move-down)
-  	          ("w h" . buf-move-left)
-  	          ("w l" . buf-move-right)))
-
-(use-package yasnippet
-  :config
-  (setq yas-snippet-dirs '("~/.config/emacs/snippets"))
-  (yas-global-mode 1))
 #+end_src
