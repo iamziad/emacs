@@ -2,3 +2,4 @@ etc/
 var/
 eln-cache/
 straight/
+config.el

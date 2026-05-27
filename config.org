@@ -171,6 +171,8 @@
                       (font-spec :family "Cairo"
                                  :size 15))))
 
+(setq-default line-spacing 0.12)
+
 (my/setup-fonts)
 
 
