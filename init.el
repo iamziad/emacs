@@ -70,21 +70,21 @@
   (define-key magit-file-section-map (kbd "C-j") nil)
   (define-key magit-diff-mode-map (kbd "C-j") nil))
 
-  (bind-keys
-   ("C-,"           . duplicate-line)
-   ("C-<tab>"       . mode-line-other-buffer)
-   ("C-n"           . (lambda () (interactive) (forward-line  5)))
-   ("C-p"           . (lambda () (interactive) (forward-line -5)))
-   ("M-n"           . recenter-top-bottom)
-   ("C-x C-="       . (lambda () (interactive) (enlarge-window-horizontally 10)))
-   ("C-x C--"       . (lambda () (interactive) (shrink-window-horizontally 10)))
+(bind-keys
+ ("C-,"           . duplicate-line)
+ ("C-<tab>"       . mode-line-other-buffer)
+ ("C-n"           . (lambda () (interactive) (forward-line  5)))
+ ("C-p"           . (lambda () (interactive) (forward-line -5)))
+ ("M-n"           . recenter-top-bottom)
+ ("C-x C-="       . (lambda () (interactive) (enlarge-window-horizontally 10)))
+ ("C-x C--"       . (lambda () (interactive) (shrink-window-horizontally 10)))
 
-   ;; C-c prefix
-   :map global-map
-   ("C-c f" . find-file-at-point)
-   ("C-c h" . previous-buffer)
-   ("C-c l" . next-buffer)
-   ("C-c o c" . my/open-config))
+ ;; C-c prefix
+ :map global-map
+ ("C-c f" . find-file-at-point)
+ ("C-c h" . previous-buffer)
+ ("C-c l" . next-buffer)
+ ("C-c o c" . my/open-config))
 
 (bind-keys :prefix-map my-leader-map
            :prefix "C-z"
@@ -93,39 +93,32 @@
            ("t"   . org-babel-tangle))
 
 (defun my/setup-fonts ()
-  (set-face-attribute 'default nil
-                      :font "JetBrainsMono Nerd Font Mono"
-                      :height 110
-                      :weight 'medium)
-  (set-face-attribute 'variable-pitch nil
-                      :family "JetBrainsMono Nerd Font Mono"
-                      :height 115
-                      :weight 'normal)
-  (set-face-attribute 'fixed-pitch nil
-                      :font "JetBrainsMono Nerd Font Mono"
-                      :height 110
-                      :weight 'medium)
+  (interactive)
+  (when (display-graphic-p)
+    (set-face-attribute 'default nil
+                        :family "JetBrains Mono Nerd Font"
+                        :height 110
+                        :weight 'regular)
 
-  (set-fontset-font (frame-parameter nil 'font)
-                    'arabic
-                    (font-spec :family "Cairo" :weight 'regular)))
+    (set-face-attribute 'fixed-pitch nil
+                        :family "JetBrains Mono Nerd Font"
+                        :height 1.0)
 
-(if (daemonp)
-    (add-hook 'after-make-frame-functions
-              (lambda (frame)
-                (with-selected-frame frame
-                  (my/setup-fonts))))
+    (set-fontset-font t 'arabic
+                      (font-spec :family "Cairo"
+                                 :size 15))))
 
-  (my/setup-fonts))
+(my/setup-fonts)
 
-(add-to-list 'default-frame-alist '(font . "JetBrains Mono-11"))
-(setq-default line-spacing 0.12)
-(add-hook 'org-mode-hook 'variable-pitch-mode)
+
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (with-selected-frame frame
+              (my/setup-fonts))))
 
 (use-package emacs
   :init
-  (setq inhibit-startup-screen t
-        duplicate-line-final-position t
+  (setq duplicate-line-final-position t
         isearch-allow-scroll t
         global-auto-revert-non-file-buffers t
         switch-to-buffer-obey-display-actions t
@@ -133,11 +126,11 @@
         scroll-margin 5
         whitespace-style '(face tabs tab-mark trailing)
         use-package-compute-statistics t
+        shr-use-fonts t
+        shr-width nil
         default-input-method "arabic")
 
   (global-whitespace-mode 1)
-  (tool-bar-mode   0)
-  (scroll-bar-mode 0)
   (column-number-mode)
   (recentf-mode 1)
   (savehist-mode 1)
@@ -224,7 +217,7 @@
 (setq-default fill-column 80)
 
 ;; Line Numbers
-(global-display-line-numbers-mode 1)
+(add-hook 'prog-mode-hook 'display-line-numbers-mode)
 (setq display-line-numbers-type 'relative)
 
 (dolist (hook '(term-mode-hook
@@ -296,6 +289,7 @@
   :config
   (setq modus-themes-mixed-fonts t)
   (setq modus-themes-italic-constructs t))
+  ;;(modus-themes-load-theme 'ef-dream))
 
 (use-package diff-hl
   :config
@@ -441,15 +435,19 @@
 
 ;; Enabling olivetti when switching to arabic
 (defun my/toggle-olivetti-by-input-method ()
-  (if current-input-method
-      (olivetti-mode 1)
-    (olivetti-mode -1)))
+  (unless (derived-mode-p 'prog-mode 'dired-mode 'vterm-mode)
+    (if current-input-method
+        (olivetti-mode 1)
+      (olivetti-mode -1))))
 
 (add-hook 'input-method-activate-hook
           #'my/toggle-olivetti-by-input-method)
 
 (add-hook 'input-method-inactivate-hook
           #'my/toggle-olivetti-by-input-method)
+
+;; Enabling olivetti in eww
+(add-hook 'eww-mode-hook #'olivetti-mode)
 
 (use-package magit
   :after (transient)
@@ -472,6 +470,14 @@
            (message "Anki: failed to push — %s" (error-message-string err))))))))
 
 (add-hook 'org-capture-after-finalize-hook #'my/anki-push-after-capture)
+
+;; (use-package shr
+;;   :ensure nil
+;;   :custom
+;;   (shr-use-fonts t)
+;;   :config
+;;   (dolist (face '(shr-h1 shr-h2 shr-h3 shr-h4 shr-h5 shr-h6))
+;;     (set-face-attribute face nil :family "JetBrains Mono")))
 
 (use-package anzu
   :config
@@ -498,3 +504,8 @@
   	          ("w j" . buf-move-down)
   	          ("w h" . buf-move-left)
   	          ("w l" . buf-move-right)))
+
+(use-package yasnippet
+  :config
+  (setq yas-snippet-dirs '("~/.config/emacs/snippets"))
+  (yas-global-mode 1))
