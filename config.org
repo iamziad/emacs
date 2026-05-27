@@ -134,6 +134,9 @@
  ("M-n"           . recenter-top-bottom)
  ("C-x C-="       . (lambda () (interactive) (enlarge-window-horizontally 10)))
  ("C-x C--"       . (lambda () (interactive) (shrink-window-horizontally 10)))
+ ("M-="           . text-scale-increase)
+ ("M--"           . text-scale-decrease)
+ ("M-0"           . (lambda () (interactive) (text-scale-set 0)))
 
  ;; C-c prefix
  :map global-map
@@ -587,7 +590,12 @@
   :after (transient)
   :init
   :commands (magit-status)
-  :bind (("C-x g" . magit-status)))
+  :bind (("C-x g" . magit-status))
+  :config
+  (setq display-buffer-alist
+        '((".*"
+           (display-buffer-reuse-window
+            display-buffer-pop-up-window)))))
 #+end_src
 
 * Anki
