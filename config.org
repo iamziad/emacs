@@ -1,4 +1,3 @@
-#+TITLE: Ziad Ahmed's Emacs Config
 #+Author: Ziad Ahmed
 #+STARTUP: showeverything
 #+PROPERTY: header-args :results silent :tangle yes
