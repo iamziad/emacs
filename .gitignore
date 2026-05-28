@@ -3,3 +3,4 @@ var/
 eln-cache/
 straight/
 config.el
+custom.el
