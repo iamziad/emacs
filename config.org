@@ -729,6 +729,9 @@
 (use-package magit
   :after transient
   :commands (magit-status)
+  :hook
+  (magit-mode    . (lambda () (variable-pitch-mode -1)))
+  (git-commit-mode . (lambda () (variable-pitch-mode -1)))
   :bind (("C-x g" . magit-status)
          ("C-x v" . magit-diff-visit-file-other-window)))
 #+end_src
