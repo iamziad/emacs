@@ -16,7 +16,6 @@
   - [[#fonts][Fonts]]
   - [[#buffers--windows][Buffers & Windows]]
   - [[#better-deletion][Better Deletion]]
-  - [[#editing][Editing]]
   - [[#dired][Dired]]
 - [[#visuals][Visuals]]
   - [[#column-indicator--line-numbers][Column Indicator & Line Numbers]]
@@ -26,6 +25,7 @@
 - [[#completion][Completion]]
   - [[#vertico-stack][Vertico Stack]]
   - [[#company][Company]]
+  - [[#corfu][Corfu]]
   - [[#yasnippet][YAsnippet]]
 - [[#programming][Programming]]
   - [[#basic-indentation][Basic Indentation]]
@@ -186,10 +186,16 @@
         use-package-compute-statistics t
         shr-use-fonts t
         shr-width nil
+        ;; interactions
+        use-short-answers t
+        confirm-kill-emacs 'yes-or-no-p
+        initial-major-mode 'org-mode
+        initial-buffer-choice t
+        ;; input method
         default-input-method "arabic")
 
   (set-fringe-mode 12)
-  (setq-default display-line-numbers-width 3)
+  (setq-default display-line-numbers-width 2)
   (global-set-key [remap dabbrev-expand] #'hippie-expand)
 
   (setq custom-file
@@ -217,8 +223,23 @@
   (minibuffer-prompt-properties
    '(read-only t cursor-intangible t face minibuffer-prompt))
 
+  ;; Corfu
+  (tab-always-indent 'complete)
+  (text-mode-ispell-word-completion nil)
+  (read-extended-command-predicate #'command-completion-default-include-p)
+
   :hook
   (before-save . delete-trailing-whitespace))
+
+(use-package recentf
+  :ensure nil
+  :config
+  (setq ;;recentf-auto-cleanup 'never
+   ;; recentf-max-menu-items 0
+   recentf-max-saved-items 200)
+  (setq recentf-filename-handlers ;; Show home folder path as a ~
+        (append '(abbreviate-file-name) recentf-filename-handlers))
+  (recentf-mode))
 #+end_src
 
 ** Fonts
@@ -236,8 +257,8 @@
                         :height 110)
 
     (set-face-attribute 'variable-pitch nil
-                        :family "Noto Sans"
-                        :height 130)
+                        :family "PlaywriteGBJ"
+                        :height 125)
 
     (set-fontset-font t 'arabic
                       (font-spec :family "Cairo"
@@ -316,18 +337,18 @@
  ("<C-backspace>" . my/backward-delete-word))
 #+end_src
 
-** Editing
+*** Editing
 #+begin_src emacs-lisp
 (use-package multiple-cursors
   :ensure t
-  :bind (("C->"         . mc/mark-next-like-this)
-         ("C-<"         . mc/mark-previous-like-this)
+  :bind (("C->"           . mc/mark-next-like-this)
+         ("C-<"           . mc/mark-previous-like-this)
          ("C-M-<"         . mc/skip-to-previous-like-this)
          ("C-M->"         . mc/skip-to-next-like-this)
-         ("C-c C-c C-d" . mc/mark-all-dwim)
-         ("C-c C-c C-a" . mc/mark-all-like-this)
-         ("C-c C-c C-n" . electric-newline-and-maybe-indent)
-         ("C-c C-c C-e"       . mc/edit-lines))
+         ("C-c m d"       . mc/mark-all-dwim)
+         ("C-c m a"       . mc/mark-all-like-this)
+         ("C-c m n"       . electric-newline-and-maybe-indent)
+         ("C-c m e"       . mc/edit-lines))
   :config
   (setq mc/always-run-for-all t))
 
@@ -405,9 +426,9 @@
         hl-todo-keyword-faces
         `(("TODO"       warning bold)
           ("FIXME"      error bold)
-          ("HACK"       font-lock-constant-face bold)
+          ("NOTE"       font-lock-constant-face bold)
           ("REVIEW"     font-lock-keyword-face bold)
-          ("NOTE"       success bold)
+          ("DONE"       success bold)
           ("DEPRECATED" font-lock-doc-face bold))))
 
 (with-eval-after-load 'magit
@@ -452,12 +473,68 @@
 #+begin_src emacs-lisp
 ;; Company mode
 (use-package company
+  :disabled t
   :ensure t
   :hook (after-init . global-company-mode)
   :bind (:map company-active-map
               ("C-j" . company-select-next)
               ("C-k" . company-select-previous)
               ("TAB" . company-complete-selection)))
+#+end_src
+
+** Corfu
+#+begin_src emacs-lisp
+(use-package corfu
+  :ensure t
+  :custom
+  (corfu-cycle t)
+  (corfu-auto t)
+  (corfu-auto-delay 0.2)
+  (corfu-auto-prefix 2)
+  (corfu-quit-at-boundary 'separator)
+  (corfu-quit-no-match 'separator)
+  (corfu-preview-current t)
+  (corfu-echo-documentation t)
+  (corfu-history-mode 1)
+  (add-to-list 'savehist-additional-variables 'corfu-history)
+
+  :init
+  (global-corfu-mode)
+
+  :config
+  (add-hook 'eshell-mode-hook (lambda () (corfu-mode -1)))
+  (setq corfu-highlight-matches nil)
+
+  :bind
+  (:map corfu-map
+        ("C-j" . corfu-next)
+        ("C-k" . corfu-previous)
+        ("M-SPC" . corfu-insert-separator)
+        ("<escape>" . corfu-quit)
+        ("RET" . nil)))
+
+(defun my/corfu-enable-in-minibuffer ()
+  (unless (or (bound-and-true-p mct--active)
+              (bound-and-true-p vertico--input)
+              (eq (current-local-map) read-expression-map))
+    (setq-local corfu-auto t)
+    (corfu-mode 1)))
+
+(add-hook 'minibuffer-setup-hook #'my/corfu-enable-in-minibuffer)
+
+(use-package cape
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-keyword))
+
+(use-package kind-icon
+  :config
+  (setq kind-icon-default-face 'corfu-default)
+  (setq kind-icon-default-style '(:padding 0 :stroke 0 :margin 0 :radius 0 :height 0.9 :scale 1))
+  (setq kind-icon-blend-frac 0.08)
+  (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter)
+  (add-hook 'counsel-load-theme #'(lambda () (interactive) (kind-icon-reset-cache)))
+  (add-hook 'load-theme         #'(lambda () (interactive) (kind-icon-reset-cache))))
 #+end_src
 
 ** YAsnippet
@@ -485,12 +562,19 @@
                            (setq indent-tabs-mode t)
                            (setq tab-width 4))))
 
+(use-package conf-mode
+  :ensure nil
+  :hook (conf-mode . (lambda ()
+                       (setq indent-tabs-mode t)
+                       (setq tab-width 4))))
+
 (use-package aggressive-indent
   :ensure t
   :config
   (global-aggressive-indent-mode 1)
   (add-to-list 'aggressive-indent-excluded-modes 'python-mode)
   (add-to-list 'aggressive-indent-excluded-modes 'yaml-mode)
+  (add-to-list 'aggressive-indent-excluded-modes 'conf-mode)
   (add-to-list 'aggressive-indent-excluded-modes 'html-mode))
 #+end_src
 
@@ -505,10 +589,24 @@
 * Org Mode
 
 #+begin_src emacs-lisp
-(require 'org-tempo)
+(setq org-hide-leading-stars t
+      org-ellipsis " ▾"
+      org-hide-emphasis-markers t
+      org-src-tab-acts-natively t
+      org-src-fontify-natively t
+      jit-lock-defer-time 0
+      jit-lock-stealth-time 1
+      org-confirm-babel-evaluate nil
+      org-src-preserve-indentation t
+      org-src-window-setup 'current-window
+      org-log-done 'note)
+
+(with-eval-after-load 'org
+  (require 'org-tempo))
 
 (add-hook 'org-mode-hook
           (lambda ()
+            (visual-line-mode 1)
             (electric-pair-local-mode -1)))
 #+end_src
 
@@ -520,14 +618,6 @@
    (C . t)
    (shell . t)
    (java . t)))
-
-(setq org-src-tab-acts-natively t
-      org-src-fontify-natively t
-      jit-lock-defer-time 0
-      jit-lock-stealth-time 1
-      org-confirm-babel-evaluate nil
-      org-src-preserve-indentation t
-      org-src-window-setup 'current-window)
 #+end_src
 
 ** Olivetti
@@ -628,6 +718,7 @@
 ** org-bullets
 #+begin_src emacs-lisp
 (use-package org-bullets
+  :ensure t
   :hook (org-mode . org-bullets-mode))
 #+end_src
 
