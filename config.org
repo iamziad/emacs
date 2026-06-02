@@ -5,6 +5,7 @@
 * Table of Contents :toc:
 - [[#bootstrap][Bootstrap]]
   - [[#straight][Straight]]
+  - [[#lisps][Lisps]]
   - [[#no-litterate][no-litterate]]
   - [[#minions][minions]]
 - [[#keybindings][Keybindings]]
@@ -20,7 +21,6 @@
 - [[#visuals][Visuals]]
   - [[#column-indicator--line-numbers][Column Indicator & Line Numbers]]
   - [[#color-themes][Color Themes]]
-  - [[#hl-todo][hl-todo]]
   - [[#rainbow-delimiters][rainbow-delimiters]]
 - [[#completion][Completion]]
   - [[#vertico-stack][Vertico Stack]]
@@ -37,7 +37,7 @@
   - [[#org-capture][org-capture]]
   - [[#toc-org][toc-org]]
   - [[#org-download][org-download]]
-  - [[#org-bullets][org-bullets]]
+  - [[#org-superstar][org-superstar]]
 - [[#git][Git]]
   - [[#magit][Magit]]
   - [[#diff-hl][diff-hl]]
@@ -67,6 +67,13 @@
 (straight-use-package 'use-package)
 (setq straight-vc-git-default-protocol 'https)
 (setq straight-use-package-by-default t)
+#+end_src
+
+** Lisps
+#+begin_src emacs-lisp
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+
+(require 'pomodoro)
 #+end_src
 
 ** no-litterate
@@ -189,6 +196,8 @@
         ;; interactions
         use-short-answers t
         confirm-kill-emacs 'yes-or-no-p
+        ;;scratch buffer
+        initial-scratch-message "* Scratch Buffer"
         initial-major-mode 'org-mode
         initial-buffer-choice t
         ;; input method
@@ -244,9 +253,6 @@
 
 ** Fonts
 #+begin_src emacs-lisp
-(defun my/setup-fonts ()
-  (interactive)
-  (when (display-graphic-p)
     (set-face-attribute 'default nil
                         :family "JetBrains Mono Nerd Font"
                         :height 110
@@ -262,18 +268,11 @@
 
     (set-fontset-font t 'arabic
                       (font-spec :family "Cairo"
-                                 :size 15)))
+                                 :size 15))
 
-  (add-hook 'text-mode-hook #'variable-pitch-mode)
-  (add-hook 'org-mode-hook #'variable-pitch-mode))
-
-(my/setup-fonts)
-
-
-(add-hook 'after-make-frame-functions
-          (lambda (frame)
-            (with-selected-frame frame
-              (my/setup-fonts))))
+(setq-default line-spacing 0.12)
+(add-to-list 'default-frame-alist '(font . "JetBrains Mono-11"))
+(add-hook 'org-mode-hook 'variable-pitch-mode)
 #+end_src
 
 ** Buffers & Windows
@@ -403,7 +402,7 @@
 *** ef-themes
 #+begin_src emacs-lisp
 (use-package ef-themes
-  :ensure t
+  :defer t
   :init
   (ef-themes-take-over-modus-themes-mode 1)
   :bind
@@ -414,28 +413,6 @@
   (setq modus-themes-mixed-fonts t)
   (setq modus-themes-italic-constructs t))
 ;;(modus-themes-load-theme 'ef-dream))
-#+end_src
-
-** hl-todo
-#+begin_src emacs-lisp
-(use-package hl-todo
-  :hook ((org-mode . hl-todo-mode)
-         (prog-mode . hl-todo-mode))
-  :config
-  (setq hl-todo-highlight-punctuation ":"
-        hl-todo-keyword-faces
-        `(("TODO"       warning bold)
-          ("FIXME"      error bold)
-          ("NOTE"       font-lock-constant-face bold)
-          ("REVIEW"     font-lock-keyword-face bold)
-          ("DONE"       success bold)
-          ("DEPRECATED" font-lock-doc-face bold))))
-
-(with-eval-after-load 'magit
-  (add-hook 'magit-log-wash-summary-hook
-            #'hl-todo-search-and-highlight t)
-  (add-hook 'magit-revision-wash-message-hook
-            #'hl-todo-search-and-highlight t))
 #+end_src
 
 ** rainbow-delimiters
@@ -561,12 +538,6 @@
   :hook (makefile-mode . (lambda ()
                            (setq indent-tabs-mode t)
                            (setq tab-width 4))))
-
-(use-package conf-mode
-  :ensure nil
-  :hook (conf-mode . (lambda ()
-                       (setq indent-tabs-mode t)
-                       (setq tab-width 4))))
 
 (use-package aggressive-indent
   :ensure t
@@ -715,11 +686,11 @@
   (setq-default org-download-image-dir "./images"))
 #+end_src
 
-** org-bullets
+** org-superstar
 #+begin_src emacs-lisp
-(use-package org-bullets
+(use-package org-superstar
   :ensure t
-  :hook (org-mode . org-bullets-mode))
+  :hook (org-mode . org-superstar-mode))
 #+end_src
 
 * Git
