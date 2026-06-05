@@ -604,9 +604,8 @@
       org-src-fontify-natively t
       jit-lock-defer-time 0
       jit-lock-stealth-time 1
-      org-confirm-babel-evaluate nil
       org-src-preserve-indentation t
-      org-src-window-setup 'current-window
+      org-pretty-entities t
       org-log-done 'note)
 
 (with-eval-after-load 'org
@@ -626,6 +625,10 @@
    (C . t)
    (shell . t)
    (java . t)))
+
+(setq org-confirm-babel-evaluate nil
+      python-shell-completion-native-enable nil
+      org-src-window-setup 'current-window)
 #+end_src
 
 ** Olivetti
@@ -642,9 +645,12 @@
 ** Anki
 #+begin_src emacs-lisp
 (use-package anki-editor
-  :ensure t)
+  :straight (anki-editor
+             :type git
+             :host github
+             :repo "louietan/anki-editor"))
 
-;; Upload to anki via org-capture
+;; Upload to  via org-capture
 (defun my/anki-push-after-capture ()
   (let ((file (expand-file-name "/tmp/anki.org")))
     (when (file-exists-p file)
@@ -727,6 +733,8 @@
 #+begin_src emacs-lisp
 (use-package org-superstar
   :ensure t
+  :config
+  (setq org-superstar-special-todo-items t)
   :hook (org-mode . org-superstar-mode))
 #+end_src
 
