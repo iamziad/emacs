@@ -27,6 +27,8 @@
   - [[#company][Company]]
   - [[#corfu][Corfu]]
   - [[#yasnippet][YAsnippet]]
+- [[#major-modes][Major Modes]]
+  - [[#markdown][Markdown]]
 - [[#programming][Programming]]
   - [[#basic-indentation][Basic Indentation]]
   - [[#editor-config][Editor Config]]
@@ -174,7 +176,9 @@
            :prefix "C-z"
            ("h"   . help-command)
            ("c"   . org-capture)
-           ("t"   . org-babel-tangle))
+           ("t"   . org-babel-tangle)
+           ("p p s" . my/pomodoro-start)
+           ("p p q" . my/pomodoro-stop))
 #+end_src
 
 * Core
@@ -193,6 +197,7 @@
         use-package-compute-statistics t
         shr-use-fonts t
         shr-width nil
+        isearch-wrap-pause 'no-ding
         ;; interactions
         use-short-answers t
         confirm-kill-emacs 'yes-or-no-p
@@ -238,7 +243,11 @@
   (read-extended-command-predicate #'command-completion-default-include-p)
 
   :hook
-  (before-save . delete-trailing-whitespace))
+  (before-save . delete-trailing-whitespace)
+  (isearch-mode-end-hook .
+          (lambda ()
+            (when (and isearch-forward (not isearch-mode-end-hook-quit))
+              (goto-char isearch-other-end)))))
 
 (use-package recentf
   :ensure nil
@@ -264,15 +273,26 @@
 
     (set-face-attribute 'variable-pitch nil
                         :family "PlaywriteGBJ"
-                        :height 125)
+                        :height 120)
 
     (set-fontset-font t 'arabic
                       (font-spec :family "Cairo"
                                  :size 15))
 
 (setq-default line-spacing 0.12)
-(add-to-list 'default-frame-alist '(font . "JetBrains Mono-11"))
+(add-to-list 'default-frame-alist '(font . "JetBrains Mono Nerd Font-11"))
 (add-hook 'org-mode-hook 'variable-pitch-mode)
+(add-hook 'markdown-mode-hook 'variable-pitch-mode)
+
+(use-package ligature
+  :ensure t
+  :config
+  (ligature-set-ligatures 'prog-mode
+                          '("|||" ">>>" "=>" "->>" "->" "-->"
+                            "<-" "<-->" "<<-" "<->" "<=" "<==" "<=>" "<~"
+                            "++" "+++" ":::" "::" "==" "!="
+                            "/*" "*/" "%%" "&&"))
+  (global-ligature-mode t))
 #+end_src
 
 ** Buffers & Windows
@@ -415,6 +435,11 @@
 ;;(modus-themes-load-theme 'ef-dream))
 #+end_src
 
+*** Solarized
+#+begin_src emacs-lisp
+(use-package solarized-theme)
+#+end_src
+
 ** rainbow-delimiters
 #+begin_src emacs-lisp
 (use-package rainbow-delimiters
@@ -520,6 +545,18 @@
   :config
   (setq yas-snippet-dirs '("~/.config/emacs/snippets"))
   (yas-global-mode 1))
+#+end_src
+
+* Major Modes
+
+** Markdown
+#+begin_src emacs-lisp
+(use-package markdown-mode
+  :ensure t
+  :mode ("README\\.md\\'" . gfm-mode)
+  :init (setq markdown-command "multimarkdown")
+  :bind (:map markdown-mode-map
+         ("C-c C-m C-d" . markdown-do)))
 #+end_src
 
 * Programming

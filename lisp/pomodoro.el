@@ -1,5 +1,4 @@
 ;;; pomodoro.el --- Simple Pomodoro -*- lexical-binding: t; -*-
-
 (require 'org-timer)
 
 (defgroup my/pomodoro nil
@@ -60,15 +59,10 @@ If LOOP is non-nil (called with C-u), it runs in a continuous loop."
     (my/pomodoro-play-sound)
     (cond
      ((eq my/pomodoro-state 'focus)
-      (if my/pomodoro-loop-p
-          (progn
-            (setq my/pomodoro-state 'break)
-            (message "Work done! Break started for %d minutes." my/pomodoro-break-duration)
-            (org-timer-set-timer my/pomodoro-break-duration))
-        (progn
-          (setq my/pomodoro-state 'stopped)
-          (message "Pomodoro finished!"))))
-
+      ;; Always start the break, loop or not
+      (setq my/pomodoro-state 'break)
+      (message "Work done! Break started for %d minutes." my/pomodoro-break-duration)
+      (org-timer-set-timer my/pomodoro-break-duration))
      ((eq my/pomodoro-state 'break)
       (if my/pomodoro-loop-p
           (progn
@@ -77,10 +71,9 @@ If LOOP is non-nil (called with C-u), it runs in a continuous loop."
             (org-timer-set-timer my/pomodoro-focus-duration))
         (progn
           (setq my/pomodoro-state 'stopped)
-          (message "Break finished!")))))))
+          (message "Pomodoro finished! Good work.")))))))
 
 (add-hook 'org-timer-done-hook #'my/pomodoro-org-done-hook-fn)
 
 (provide 'pomodoro)
-
 ;;; pomodoro.el ends here
