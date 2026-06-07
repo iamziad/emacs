@@ -161,6 +161,8 @@
  ("M-="           . text-scale-increase)
  ("M--"           . text-scale-decrease)
  ("M-0"           . (lambda () (interactive) (text-scale-set 0)))
+ ("C-}"           . forward-paragraph)
+ ("C-{"           . backward-paragraph)
 
  ;; C-c prefix
  :map global-map
@@ -281,16 +283,14 @@
 
 (setq-default line-spacing 0.12)
 (add-to-list 'default-frame-alist '(font . "JetBrains Mono Nerd Font-11"))
-(add-hook 'org-mode-hook 'variable-pitch-mode)
-(add-hook 'markdown-mode-hook 'variable-pitch-mode)
 
 (use-package ligature
   :ensure t
   :config
   (ligature-set-ligatures 'prog-mode
-                          '("|||" ">>>" "=>" "->>" "->" "-->"
+                          '("|||" ">>>" "=>" ">=" "->>" "->" "-->"
                             "<-" "<-->" "<<-" "<->" "<=" "<==" "<=>" "<~"
-                            "++" "+++" ":::" "::" "==" "!="
+                            "++" "+++" ":::" "::" "!="
                             "/*" "*/" "%%" "&&"))
   (global-ligature-mode t))
 #+end_src
@@ -413,7 +413,7 @@
         gm-org                      'material
         gm-diff-hl-style            'signs
         gm-org-scale-headings       'conservative
-        gm-syntax-keywords          'semi-bold
+        gm-syntax-keywords          'regular
         gm-light-contrast           'hard)
   :config
   (gruvbox-material-load))
@@ -557,6 +557,8 @@
   :init (setq markdown-command "multimarkdown")
   :bind (:map markdown-mode-map
          ("C-c C-m C-d" . markdown-do)))
+
+;; (add-hook 'markdown-mode-hook 'variable-pitch-mode)
 #+end_src
 
 * Programming
@@ -606,7 +608,11 @@
       jit-lock-stealth-time 1
       org-src-preserve-indentation t
       org-pretty-entities t
+      org-startup-with-latex-preview t
       org-log-done 'note)
+
+(setq org-format-latex-options
+      (plist-put org-format-latex-options :scale 2))
 
 (with-eval-after-load 'org
   (require 'org-tempo))
@@ -615,6 +621,9 @@
           (lambda ()
             (visual-line-mode 1)
             (electric-pair-local-mode -1)))
+
+;; (add-hook 'org-mode-hook 'variable-pitch-mode)
+(add-hook 'org-mode-hook #'org-indent-mode)
 #+end_src
 
 ** Babel
@@ -734,8 +743,8 @@
 (use-package org-superstar
   :ensure t
   :config
-  (setq org-superstar-special-todo-items t)
-  :hook (org-mode . org-superstar-mode))
+  (setq org-superstar-special-todo-items t))
+  ;; :hook (org-mode . org-superstar-mode))
 #+end_src
 
 * Git
@@ -743,6 +752,7 @@
 ** Magit
 #+begin_src emacs-lisp
 (use-package magit
+  :ensure t
   :after transient
   :commands (magit-status)
   :hook
