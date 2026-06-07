@@ -609,6 +609,7 @@
       org-src-preserve-indentation t
       org-pretty-entities t
       org-startup-with-latex-preview t
+      org-preview-latex-default-process 'dvisvgm
       org-log-done 'note)
 
 (setq org-format-latex-options
