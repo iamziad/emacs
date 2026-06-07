@@ -1,6 +1,5 @@
 #+Author: Ziad Ahmed
 #+STARTUP: showeverything
-#+PROPERTY: header-args :results silent :tangle yes
 
 * Table of Contents :toc:
 - [[#bootstrap][Bootstrap]]
@@ -176,11 +175,12 @@
 #+begin_src emacs-lisp
 (bind-keys :prefix-map my-leader-map
            :prefix "C-z"
-           ("h"   . help-command)
-           ("c"   . org-capture)
-           ("t"   . org-babel-tangle)
+           ("h"     . help-command)
+           ("c"     . org-capture)
+           ("t"     . org-babel-tangle)
            ("p p s" . my/pomodoro-start)
-           ("p p q" . my/pomodoro-stop))
+           ("p p q" . my/pomodoro-stop)
+           ("m l"   . magit-list-repositories))
 #+end_src
 
 * Core
@@ -760,6 +760,11 @@
   (git-commit-mode . (lambda () (variable-pitch-mode -1)))
   :bind (("C-x g" . magit-status)
          ("C-x v" . magit-diff-visit-file-other-window)))
+
+(setq magit-repository-directories
+      '(("~/" . 1)
+        ("~/dotfiles" . 0)
+        ("~/Programming" . 1)))
 #+end_src
 
 ** diff-hl
