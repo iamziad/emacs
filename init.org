@@ -1,5 +1,6 @@
 #+Author: Ziad Ahmed
 #+STARTUP: showeverything
+#+PROPERTY: header-args :tangle "init.el"
 
 * Table of Contents :toc:
 - [[#bootstrap][Bootstrap]]
@@ -38,7 +39,6 @@
   - [[#org-capture][org-capture]]
   - [[#toc-org][toc-org]]
   - [[#org-download][org-download]]
-  - [[#org-superstar][org-superstar]]
 - [[#git][Git]]
   - [[#magit][Magit]]
   - [[#diff-hl][diff-hl]]
@@ -68,6 +68,7 @@
 (straight-use-package 'use-package)
 (setq straight-vc-git-default-protocol 'https)
 (setq straight-use-package-by-default t)
+(setq native-comp-async-report-warnings-errors 'silent)
 #+end_src
 
 ** Lisps
@@ -247,9 +248,9 @@
   :hook
   (before-save . delete-trailing-whitespace)
   (isearch-mode-end-hook .
-          (lambda ()
-            (when (and isearch-forward (not isearch-mode-end-hook-quit))
-              (goto-char isearch-other-end)))))
+                         (lambda ()
+                           (when (and isearch-forward (not isearch-mode-end-hook-quit))
+                             (goto-char isearch-other-end)))))
 
 (use-package recentf
   :ensure nil
@@ -264,22 +265,22 @@
 
 ** Fonts
 #+begin_src emacs-lisp
-    (set-face-attribute 'default nil
-                        :family "JetBrains Mono Nerd Font"
-                        :height 110
-                        :weight 'regular)
+(set-face-attribute 'default nil
+                    :family "JetBrains Mono Nerd Font"
+                    :height 110
+                    :weight 'regular)
 
-    (set-face-attribute 'fixed-pitch nil
-                        :family "JetBrains Mono Nerd Font"
-                        :height 110)
+(set-face-attribute 'fixed-pitch nil
+                    :family "JetBrains Mono Nerd Font"
+                    :height 110)
 
-    (set-face-attribute 'variable-pitch nil
-                        :family "PlaywriteGBJ"
-                        :height 120)
+(set-face-attribute 'variable-pitch nil
+                    :family "PlaywriteGBJ"
+                    :height 120)
 
-    (set-fontset-font t 'arabic
-                      (font-spec :family "Cairo"
-                                 :size 15))
+(set-fontset-font t 'arabic
+                  (font-spec :family "Cairo"
+                             :size 15))
 
 (setq-default line-spacing 0.12)
 (add-to-list 'default-frame-alist '(font . "JetBrains Mono Nerd Font-11"))
@@ -402,19 +403,19 @@
 #+begin_src emacs-lisp
 (use-package gruvbox-material-emacs
   :straight (gruvbox-material-emacs
-             :local-repo "~/gruvbox-material-emacs"
-             :branch "perf"
-             :type git
-             :files ("*.el"))
+	         :local-repo "~/Development/gruvbox-material-emacs"
+	         :branch "perf"
+	         :type git
+	         :files ("*.el"))
   :init
   (setq gm-background               'dark
-        gm-dark-variant             'classic
-        gm-dark-modeline            'material
-        gm-org                      'material
-        gm-diff-hl-style            'signs
-        gm-org-scale-headings       'conservative
-        gm-syntax-keywords          'regular
-        gm-light-contrast           'hard)
+	    gm-dark-variant             'classic
+	    gm-dark-modeline            'material
+	    gm-org                      'material
+	    gm-diff-hl-style            'signs
+	    gm-org-scale-headings       'conservative
+	    gm-syntax-keywords          'regular
+	    gm-light-contrast           'hard)
   :config
   (gruvbox-material-load))
 #+end_src
@@ -556,7 +557,7 @@
   :mode ("README\\.md\\'" . gfm-mode)
   :init (setq markdown-command "multimarkdown")
   :bind (:map markdown-mode-map
-         ("C-c C-m C-d" . markdown-do)))
+              ("C-c C-m C-d" . markdown-do)))
 
 ;; (add-hook 'markdown-mode-hook 'variable-pitch-mode)
 #+end_src
@@ -737,15 +738,6 @@
   :config
   (setq-default org-download-heading-lvl nil)
   (setq-default org-download-image-dir "./images"))
-#+end_src
-
-** org-superstar
-#+begin_src emacs-lisp
-(use-package org-superstar
-  :ensure t
-  :config
-  (setq org-superstar-special-todo-items t))
-  ;; :hook (org-mode . org-superstar-mode))
 #+end_src
 
 * Git
