@@ -22,8 +22,10 @@
   (start-process
    "pomodoro-sound"
    nil
-   "aplay"
-   (expand-file-name "~/Music/emacs/pomodoro/bell.wav")))
+   "mpv"
+   "--no-video"
+   "--really-quiet"
+   (expand-file-name "/home/ziad/.config/emacs/lisp/pomodoro/bell.wav")))
 
 (defun my/pomodoro-append-state-to-mode-line (&rest _)
   "Advice to append current Pomodoro state to the org-timer mode-line string."
