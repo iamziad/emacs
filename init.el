@@ -19,10 +19,13 @@
   (setq straight-use-package-by-default t)
   (setq native-comp-async-report-warnings-errors 'silent)
 
-  (let ((default-directory (expand-file-name "lisp" user-emacs-directory)))
-    (normal-top-level-add-subdirs-to-load-path))
+(add-to-list 'load-path (expand-file-name "lisp" user-emacs-directory))
+(normal-top-level-add-subdirs-to-load-path)
+(mapc #'load (directory-files-recursively
+              (expand-file-name "lisp" user-emacs-directory)
+              "\\.el$"))
 
-  (require 'pomodoro)
+(require 'pomodoro)
 
   (use-package no-littering
     :straight t
@@ -84,24 +87,26 @@
     (define-key magit-diff-mode-map (kbd "C-j") nil))
 
   (bind-keys
-   ("C-," . duplicate-line)
-   ("C-<tab>" . mode-line-other-buffer)
-   ("C-n" . (lambda () (interactive) (forward-line 5)))
-   ("C-p" . (lambda () (interactive) (forward-line -5)))
-   ("M-n" . recenter-top-bottom)
-   ("C-x C-=" . (lambda () (interactive) (enlarge-window-horizontally 10)))
-   ("C-x C--" . (lambda () (interactive) (shrink-window-horizontally 10)))
-   ("M-=" . text-scale-increase)
-   ("M--" . text-scale-decrease)
-   ("M-0" . (lambda () (interactive) (text-scale-set 0)))
-   ("C-}" . forward-paragraph)
-   ("C-{" . backward-paragraph)
-   ("C-c f" . find-file-at-point)
-   ("C-c h" . previous-buffer)
-   ("C-c l" . next-buffer)
-   ("C-c c" . compile)
-   ("C-c p t u" . my/pdf-tmp-url)
-   ("C-c p u" . my/pdf-url))
+   ("C-,"        . duplicate-line)
+   ("C-<tab>"    . mode-line-other-buffer)
+   ("C-n"        . (lambda () (interactive) (forward-line 5)))
+   ("C-p"        . (lambda () (interactive) (forward-line -5)))
+   ("M-n"        . recenter-top-bottom)
+   ("C-x C-="    . (lambda () (interactive) (enlarge-window-horizontally 10)))
+   ("C-x C--"    . (lambda () (interactive) (shrink-window-horizontally 10)))
+   ("M-="        . text-scale-increase)
+   ("M--"        . text-scale-decrease)
+   ("M-0"        . (lambda () (interactive) (text-scale-set 0)))
+   ("C-}"        . forward-paragraph)
+   ("C-{"        . backward-paragraph)
+   ("C-c f"      . find-file-at-point)
+   ("C-c h"      . previous-buffer)
+   ("C-c l"      . next-buffer)
+   ("C-c c"      . compile)
+   ("C-c d s"    . my/sudo-this-file)
+   ("C-c d f"    . my/dired-home)
+   ("C-c p t u"  . my/pdf-tmp-url)
+   ("C-c p u"    . my/pdf-url))
 
   (bind-keys :prefix-map my-leader-map
              :prefix "C-z"
@@ -137,9 +142,9 @@
           use-short-answers t
           confirm-kill-emacs 'yes-or-no-p
           ;; scratch buffer
-          initial-scratch-message "* Scratch Buffer"
-          initial-major-mode 'org-mode
-          initial-buffer-choice t
+          ;; initial-scratch-message "* Scratch Buffer"
+          ;; initial-major-mode 'org-mode
+          initial-buffer-choice "~/Documents/org/scratch.org"
           ;; input method
           default-input-method "arabic")
 
@@ -152,6 +157,12 @@
           (expand-file-name "custom.el" user-emacs-directory))
     (when (file-exists-p custom-file)
       (load custom-file t))
+
+    (setq display-buffer-alist
+  '(("\\*compilation\\*"
+     (display-buffer-reuse-window display-buffer-at-bottom)
+     (reusable-frames . nil)
+     (window-height . 0.45))))
 
     (global-whitespace-mode t)
     (column-number-mode t)
@@ -301,33 +312,35 @@
 
   (require 'dired-x)
 
-  (use-package dired-open
-    :straight t
-    :config
-    (setq dired-open-extensions
-          '(("png" . "imv-dir")
-            ("jpg" . "imv-dir")
-            ("gif" . "imv-dir")
-            ("mp4" . "mpv")
-            ("mkv" . "mpv")
-            ("webm" . "mpv")
-            ("mp3" . "mpv")
-            ("flac" . "mpv")
-            ("pdf" . "zathura")))
-    :bind (:map dired-mode-map
-                ("o" . dired-open-file)))
-
   (use-package image-dired
     :config
     (setq image-dired-thumbnail-storage 'standard)
     :bind (:map dired-mode-map
                 ("C-t d" . image-dired)))
 
+(defun my/dired-open-xdg ()
+  (interactive)
+  (let ((file (dired-get-file-for-visit)))
+    (call-process "xdg-open" nil 0 nil file)))
+
+(with-eval-after-load 'dired
+  (keymap-set dired-mode-map "o" #'my/dired-open-xdg))
+
   (setq dired-omit-files
         (concat dired-omit-files "\\|^\\..+$"))
   (setq-default dired-dwim-target t)
   (setq dired-listing-switches "-alh")
   (setq dired-mouse-drag-files t)
+
+(defun my/sudo-this-file ()
+  (interactive)
+  (when buffer-file-name
+    (find-alternate-file
+     (concat "/sudo::" buffer-file-name))))
+
+(defun my/dired-home ()
+  (interactive)
+  (dired "~"))
 
   (setq-default fill-column 80)
   (setq display-line-numbers-type 'relative)
@@ -531,10 +544,10 @@
           (markdown        "https://github.com/tree-sitter-grammars/tree-sitter-markdown" "split_parser" "tree-sitter-markdown/src")
           (markdown-inline "https://github.com/tree-sitter-grammars/tree-sitter-markdown" "split_parser" "tree-sitter-markdown-inline/src")))
 
-  (dolist (grammar treesit-language-source-alist)
-    (message "Treesitter: Installing %s" (car grammar))
-    (unless (treesit-language-available-p (car grammar))
-      (treesit-install-language-grammar (car grammar))))
+(dolist (grammar treesit-language-source-alist)
+  (unless (treesit-language-available-p (car grammar))
+    (message "Treesitter: Installing %s..." (car grammar))
+    (treesit-install-language-grammar (car grammar))))
 
   (setq major-mode-remap-alist
         '((c-mode          . c-ts-mode)
