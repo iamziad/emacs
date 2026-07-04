@@ -12,7 +12,6 @@
 
 (setq default-frame-alist
       '((background-color . "#282828")
-        (foreground-color . "#d4be98")
         (vertical-scroll-bars . nil)
         (tool-bar-lines . 0)))
 
