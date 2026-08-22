@@ -7,6 +7,5 @@ tree-sitter/
 places
 recentf
 history
-modules/
 config.el
 custom.el
