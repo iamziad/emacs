@@ -2,5 +2,11 @@ etc/
 var/
 eln-cache/
 straight/
+elpa/
+places
+recentf
+history
+modules/
+tree-sitter/
 config.el
 custom.el
